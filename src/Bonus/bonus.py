@@ -1,3 +1,4 @@
+# Bonus for Transform in ETL
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col, from_json, to_json, struct, expr, window, unix_timestamp, lit,
@@ -5,12 +6,12 @@ from pyspark.sql.functions import (
 )
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, TimestampType
 
-# Tên các topic Kafka
+# Topic Kafka
 KAFKA_PRICE_TOPIC = "btc-price"
 KAFKA_HIGHER_TOPIC = "btc-price-higher"
 KAFKA_LOWER_TOPIC = "btc-price-lower"
 
-# Tạo phiên Spark
+# Spark Session
 spark = SparkSession \
     .builder \
     .appName("BTCPriceWindow") \
@@ -24,14 +25,14 @@ spark = SparkSession \
 
 spark.sparkContext.setLogLevel("ERROR")
 
-# Định nghĩa schema của dữ liệu JSON nhận từ Kafka
+# Define the schema of the JSON data received from Kafka
 schema = StructType([
     StructField("symbol", StringType()),
     StructField("price", DoubleType()),
     StructField("timestamp", StringType()),  # Dạng chuỗi ISO8601
 ])
 
-# Đọc stream từ Kafka
+# Read stream from Kafka
 raw_df = spark.readStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "broker:9092") \
@@ -39,7 +40,7 @@ raw_df = spark.readStream \
     .option("startingOffsets", "latest") \
     .load()
 
-# Parse chuỗi JSON và ép kiểu timestamp
+# Parse JSON string and cast timestamp
 price_df = raw_df.selectExpr("CAST(value AS STRING)") \
     .select(from_json(col("value"), schema).alias("data")) \
     .select(
