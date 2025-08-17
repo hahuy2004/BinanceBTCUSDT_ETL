@@ -9,7 +9,7 @@ from kafka import KafkaProducer
 
 # --- Configuration ---
 BINANCE_API_URL = "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
-KAFKA_BROKER = 'localhost:9092'
+KAFKA_BROKER = 'localhost:9092' # Or 'broker:9094'
 KAFKA_TOPIC_EXTRACT = 'btc-price'
 TARGET_INTERVAL_SECONDS = 0.1
 NUM_THREADS = 4
