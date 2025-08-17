@@ -35,7 +35,7 @@ schema = StructType([
 # Read stream from Kafka
 raw_df = spark.readStream \
     .format("kafka") \
-    .option("kafka.bootstrap.servers", "broker:9092") \
+    .option("kafka.bootstrap.servers", "localhost:9092") \ # Or "broker:9092" if using Docker
     .option("subscribe", KAFKA_PRICE_TOPIC) \
     .option("startingOffsets", "latest") \
     .load()
@@ -128,7 +128,7 @@ higher_query = final_higher.select(
     )).alias("value")
 ).writeStream \
     .format("kafka") \
-    .option("kafka.bootstrap.servers", "broker:9092") \
+    .option("kafka.bootstrap.servers", "localhost:9092") \ # Or "broker:9092" if using Docker
     .option("topic", KAFKA_HIGHER_TOPIC) \
     .option("checkpointLocation", "/tmp/spark-checkpoint-higher") \
     .outputMode("append") \
@@ -143,7 +143,7 @@ lower_query = final_lower.select(
     )).alias("value")
 ).writeStream \
     .format("kafka") \
-    .option("kafka.bootstrap.servers", "broker:9092") \
+    .option("kafka.bootstrap.servers", "localhost:9092") \ # Or "broker:9092" if using Docker
     .option("topic", KAFKA_LOWER_TOPIC) \
     .option("checkpointLocation", "/tmp/spark-checkpoint-lower") \
     .outputMode("append") \
