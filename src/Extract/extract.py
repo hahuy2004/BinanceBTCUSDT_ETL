@@ -9,13 +9,12 @@ from kafka import KafkaProducer
 
 # --- Configuration ---
 BINANCE_API_URL = "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
-KAFKA_BROKER = 'localhost:9094'
+KAFKA_BROKER = 'localhost:9092'
 KAFKA_TOPIC_EXTRACT = 'btc-price'
 TARGET_INTERVAL_SECONDS = 0.1
 NUM_THREADS = 4
 API_TIMEOUT_SECONDS = 2
 
-# Cấu hình logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -58,7 +57,7 @@ def format_timestamp(precision_ms=100):
     event_time = event_time.replace(microsecond=rounded_ms * 1000)
     return event_time.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
 
-# Hàng đợi chỉ giữ phần tử mới nhất
+# The newest queue contains only elements
 class LatestOnlyQueue(Queue):
     def put(self, item, block=True, timeout=None):
         with self.mutex:
