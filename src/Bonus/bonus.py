@@ -49,9 +49,9 @@ price_df = raw_df.selectExpr("CAST(value AS STRING)") \
         col("data.timestamp").cast(TimestampType()).alias("event_time")
     ).withWatermark("event_time", "10 seconds")
 
-# Self join để tìm các bản ghi tương lai trong 20s tiếp theo
-# Spark yêu cầu phải có điều kiện bằng "=" khi join stream–stream
-# Ta dùng symbol làm điều kiện bằng, rồi lọc theo thời gian sau join
+# Self join to find future records within the next 20s
+# Spark requires an "=" condition for stream–stream join
+# Use symbol as the equality condition, then filter by timestamp after the join
 joined_df = price_df.alias("base").join(
     price_df.alias("future"),
     col("base.symbol") == col("future.symbol"),
@@ -65,12 +65,12 @@ joined_df = price_df.alias("base").join(
     col("future.event_time").alias("future_time"),
     col("future.price").alias("future_price")
 ).withColumn(
-    # Tính khoảng thời gian chênh lệch giữa 2 thời điểm
+    # Calculate the time difference between two timestamps
     "time_diff",
     (col("future_time").cast("double") - col("base_time").cast("double"))
 )
 
-# Tìm thời điểm đầu tiên mà giá tăng trong vòng 20s tiếp theo
+# Find the first timestamp where the price increases within the next 20s
 higher_candidates = joined_df \
     .filter(col("future_price") > col("base_price")) \
     .groupBy("base_time", "base_price") \
@@ -81,7 +81,7 @@ higher_candidates = joined_df \
         round(col("min_time_diff"), 3).alias("higher_window")  # Làm tròn 3 chữ số
     )
 
-# Tìm thời điểm đầu tiên mà giá giảm trong vòng 20s tiếp theo
+# Find the first timestamp where the price decreases within the next 20s
 lower_candidates = joined_df \
     .filter(col("future_price") < col("base_price")) \
     .groupBy("base_time", "base_price") \
@@ -92,13 +92,13 @@ lower_candidates = joined_df \
         round(col("min_time_diff"), 3).alias("lower_window")  # Làm tròn 3 chữ số
     )
 
-# Lấy tất cả các bản ghi gốc từ price_df (distinct)
+# Get all original records from price_df (distinct)
 base_records = price_df.select(
     col("event_time").alias("base_time"),
     col("price").alias("base_price")
 ).distinct()
 
-# Tạo kết quả cuối cho higher window, nếu không tìm được thì gán 20.0
+# Create the final result for the higher window, assign 20.0 if not found
 final_higher = base_records.alias("br").join(
     higher_candidates.alias("hc"),
     (col("br.base_time") == col("hc.base_time")) &
@@ -109,7 +109,7 @@ final_higher = base_records.alias("br").join(
     coalesce(col("hc.higher_window"), lit(20.0)).alias("higher_window")
 )
 
-# Tạo kết quả cuối cho lower window, nếu không tìm được thì gán 20.0
+# Create the final result for the lower window, assign 20.0 if not found
 final_lower = base_records.alias("br").join(
     lower_candidates.alias("lc"),
     (col("br.base_time") == col("lc.base_time")) &
@@ -120,7 +120,7 @@ final_lower = base_records.alias("br").join(
     coalesce(col("lc.lower_window"), lit(20.0)).alias("lower_window")
 )
 
-# Ghi kết quả higher window ra Kafka
+# Write higher window results to Kafka
 higher_query = final_higher.select(
     to_json(struct(
         date_format(col("timestamp"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").alias("timestamp"),
@@ -135,7 +135,7 @@ higher_query = final_higher.select(
     .trigger(processingTime='5 seconds') \
     .start()
 
-# Ghi kết quả lower window ra Kafka
+# Write lower window results to Kafka
 lower_query = final_lower.select(
     to_json(struct(
         date_format(col("timestamp"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").alias("timestamp"),
@@ -150,7 +150,7 @@ lower_query = final_lower.select(
     .trigger(processingTime='5 seconds') \
     .start()
 
-# Chờ cả hai stream kết thúc
+# Wait for both streams to end
 try:
     higher_query.awaitTermination()
     lower_query.awaitTermination()
