@@ -9,7 +9,7 @@ from pyspark.sql.types import (
 )
 
 # Kafka and checkpoint configuration constants
-KAFKA_BOOTSTRAP_SERVERS = "broker:9092"
+KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
 KAFKA_PRICE_TOPIC = "btc-price"
 KAFKA_MOVING_TOPIC = "btc-price-moving"
 BASE_CHECKPOINT_PATH = "/tmp/spark_checkpoints/moving"
