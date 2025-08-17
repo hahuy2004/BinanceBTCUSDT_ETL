@@ -12,7 +12,7 @@ load_dotenv()
 
 # ---- Configuration ----
 # Kafka connection and topic settings
-KAFKA_BOOTSTRAP_SERVERS = "broker:9092"
+KAFKA_BOOTSTRAP_SERVERS = "localhost:9092" # Or "broker:9092" if using Docker
 KAFKA_ZSCORE_TOPIC = "btc-price-zscore"
 # MongoDB connection settings
 MONGODB_DATABASE = os.getenv("MONGODB_DATABASE")
