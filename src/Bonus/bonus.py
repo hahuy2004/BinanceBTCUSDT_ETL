@@ -29,7 +29,7 @@ spark.sparkContext.setLogLevel("ERROR")
 schema = StructType([
     StructField("symbol", StringType()),
     StructField("price", DoubleType()),
-    StructField("timestamp", StringType()),  # Dạng chuỗi ISO8601
+    StructField("timestamp", StringType()),  # ISO8601 string
 ])
 
 # Read stream from Kafka
